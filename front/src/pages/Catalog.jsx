@@ -1,10 +1,23 @@
-import { fighters, rooms } from '../data/catalog.js'
+import { useEffect, useState } from 'react'
 
-const euros = new Intl.NumberFormat('en-GB', {
-  style: 'currency',
-  currency: 'EUR',
-  maximumFractionDigits: 0,
-})
+// Amounts come from the API as { amount: integer cents, currency }.
+function formatMoney(money) {
+  if (!money) return '—'
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: money.currency,
+    maximumFractionDigits: 0,
+  }).format(money.amount / 100)
+}
+
+async function fetchItems(path) {
+  const response = await fetch(path)
+  if (!response.ok) {
+    const problem = await response.json().catch(() => ({}))
+    throw new Error(problem.detail ?? `Request failed (${response.status}).`)
+  }
+  return (await response.json()).items
+}
 
 // BOXING -> Boxing, LIGHT_HEAVYWEIGHT -> Light heavyweight
 function label(code) {
@@ -36,7 +49,9 @@ function FighterCard({ fighter }) {
             {fighter.firstName} {fighter.lastName} · {fighter.city}
           </p>
         </div>
-        <span className="rating" title="Average rating">★ {fighter.rating.toFixed(1)}</span>
+        {fighter.rating !== null && (
+          <span className="rating" title="Average rating">★ {fighter.rating.toFixed(1)}</span>
+        )}
       </header>
 
       <Tags items={fighter.disciplines} />
@@ -59,8 +74,8 @@ function FighterCard({ fighter }) {
       <p className="bio">{fighter.bio}</p>
 
       <footer className="card-footer">
-        <span>Duel <strong>{euros.format(fighter.rates.DUEL / 100)}</strong></span>
-        <span>Show <strong>{euros.format(fighter.rates.SHOW / 100)}</strong></span>
+        <span>Duel <strong>{formatMoney(fighter.rates.DUEL)}</strong></span>
+        <span>Show <strong>{formatMoney(fighter.rates.SHOW)}</strong></span>
       </footer>
     </article>
   )
@@ -86,25 +101,41 @@ function RoomCard({ room }) {
           <dd>{room.capacity} spectators</dd>
         </div>
         <div>
-          <dt>City</dt>
-          <dd>{room.city}</dd>
+          <dt>Upcoming slots</dt>
+          <dd>{room.upcomingSlots}</dd>
         </div>
       </dl>
 
       <footer className="card-footer">
-        <span>2-hour slot <strong>{euros.format(room.slotPrice / 100)}</strong></span>
+        <span>2-hour slot from <strong>{formatMoney(room.priceFrom)}</strong></span>
       </footer>
     </article>
   )
 }
 
-function Section({ id, title, count, children }) {
+// Loads one list from the API and renders its cards, or a loading / error / empty message.
+function Section({ id, title, path, empty, renderCard }) {
+  const [state, setState] = useState({ status: 'loading', items: [] })
+
+  useEffect(() => {
+    let cancelled = false
+    fetchItems(path)
+      .then((items) => !cancelled && setState({ status: 'ready', items }))
+      .catch((error) => !cancelled && setState({ status: 'error', items: [], message: error.message }))
+    return () => {
+      cancelled = true
+    }
+  }, [path])
+
   return (
-    <section className="catalog-section" aria-labelledby={id}>
+    <section className="catalog-section" aria-labelledby={id} aria-busy={state.status === 'loading'}>
       <h2 id={id}>
-        {title} <span className="count">{count}</span>
+        {title} {state.status === 'ready' && <span className="count">{state.items.length}</span>}
       </h2>
-      <div className="card-grid">{children}</div>
+      {state.status === 'loading' && <p className="muted">Loading…</p>}
+      {state.status === 'error' && <p className="error">Could not load {title.toLowerCase()}: {state.message}</p>}
+      {state.status === 'ready' && state.items.length === 0 && <p className="muted">{empty}</p>}
+      {state.items.length > 0 && <div className="card-grid">{state.items.map(renderCard)}</div>}
     </section>
   )
 }
@@ -114,17 +145,21 @@ export default function Catalog() {
     <main className="catalog">
       <h1>Catalog</h1>
 
-      <Section id="fighters" title="Fighters" count={fighters.length}>
-        {fighters.map((fighter) => (
-          <FighterCard key={fighter.id} fighter={fighter} />
-        ))}
-      </Section>
+      <Section
+        id="fighters"
+        title="Fighters"
+        path="/api/fighters?limit=100"
+        empty="No fighter available yet."
+        renderCard={(fighter) => <FighterCard key={fighter.id} fighter={fighter} />}
+      />
 
-      <Section id="rooms" title="Rooms" count={rooms.length}>
-        {rooms.map((room) => (
-          <RoomCard key={room.id} room={room} />
-        ))}
-      </Section>
+      <Section
+        id="rooms"
+        title="Rooms"
+        path="/api/venues?limit=100"
+        empty="No room available yet."
+        renderCard={(room) => <RoomCard key={room.id} room={room} />}
+      />
     </main>
   )
 }

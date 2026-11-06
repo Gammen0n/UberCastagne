@@ -3,10 +3,13 @@ services:
     build:
       context: ./front
     working_dir: /app
-    command: npm run dev -- --host 0.0.0.0
+    # Install first: the node_modules volume would otherwise keep an outdated set of packages.
+    command: sh -c "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0"
     volumes:
       - ./front:/app
       - front_node_modules:/app/node_modules
+    environment:
+      API_URL: http://back:3000
     ports:
       - "5173:5173"
     depends_on:
@@ -16,10 +19,16 @@ services:
     build:
       context: ./back
     working_dir: /app
-    command: npm run dev -- --host 0.0.0.0
+    # Install first: the node_modules volume would otherwise keep an outdated set of packages.
+    command: sh -c "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0"
     volumes:
       - ./back:/app
       - back_node_modules:/app/node_modules
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      CATALOGUE_DB_PASSWORD: ${CATALOGUE_DB_PASSWORD:?copier .env.example en .env}
+      VENUES_DB_PASSWORD: ${VENUES_DB_PASSWORD:?copier .env.example en .env}
     ports:
       - "3000:3000"
     depends_on:
@@ -42,7 +51,7 @@ services:
       - ./db/sql:/sql:ro
     # Exposé uniquement sur la machine locale, pour inspecter les bases en développement.
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
