@@ -1,0 +1,106 @@
+/*
+ * Uber Castagne design tokens. Every colour, size, radius, shadow and duration used by the
+ * components comes from here; component styles must not contain raw values.
+ *
+ * Contrast (WCAG 2.1, measured): text 17.7:1, text-2 7.6:1, text-3 4.8:1 on --surface;
+ * status text on its tint: success 4.6, warning 4.7, danger 5.7, info 5.9, neutral 6.6; tag 16.2.
+ * --text-3 is only 4.4:1 on --bg, so on the page background use --text-2 instead.
+ */
+:root {
+  /* Colours */
+  --ink-900: #0b1426;
+  --ink-800: #14213d;
+  --ink-600: #3b4a66;
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #f9fafb;
+  --border: #e2e5ea;
+  --text: #111827;
+  --text-2: #4b5563;
+  --text-3: #6b7280;
+  --text-on-dark: #ffffff;
+  --text-on-dark-2: #c5ccd8;
+  --accent: #c2410c;
+  --accent-hover: #9a3412;
+  --accent-tint: #fdeee6;
+  --success: #15803d;
+  --success-tint: #eff8f2;
+  --warning: #b45309;
+  --warning-tint: #fef6ea;
+  --danger: #b91c1c;
+  --danger-tint: #fdecec;
+  --info: #1d4ed8;
+  --info-tint: #eaf0fd;
+  --neutral: #4b5563;
+  --neutral-tint: #eef0f3;
+  --skeleton: #e9ecf0;
+  --skeleton-shine: #f4f5f7;
+
+  /* Typography */
+  --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif-condensed, system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --text-12: 0.75rem;
+  --text-14: 0.875rem;
+  --text-16: 1rem;
+  --text-20: 1.25rem;
+  --text-24: 1.5rem;
+  --text-32: 2rem;
+  --text-40: 2.5rem;
+  --leading-tight: 1.1;
+  --leading-snug: 1.3;
+  --leading-body: 1.5;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --tracking-title: 0.02em;
+  --tracking-label: 0.06em;
+
+  /* Spacing (4 px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+
+  /* Shapes */
+  --radius-tag: 6px;
+  --radius-field: 6px;
+  --radius-button: 10px;
+  --radius-card: 14px;
+  --radius-pill: 999px;
+  --hairline: 1px;
+  --accent-bar: 3px;
+  --ring-width: 2px;
+  --ring-offset: 2px;
+
+  /* Sizes */
+  --content-max: 1200px;
+  --gutter: var(--space-6);
+  --topbar-height: 4rem;
+  --avatar: 3rem;
+  --logo-bar-height: 3rem;
+  --logo-hero-height: 12rem;
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-stroke: 1.75;
+  --field-height: 2.5rem;
+  --button-height: 2.5rem;
+  --button-height-sm: 2rem;
+  --timeline-marker: 2rem;
+  --field-min: 10rem;
+
+  /* Elevation */
+  --shadow-rest: 0 1px 2px rgb(11 20 38 / 0.06);
+  --shadow-hover: 0 8px 24px rgb(11 20 38 / 0.1);
+
+  /* Motion */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --lift: -2px;
+  --duration-spin: 800ms;
+  --duration-shimmer: 1.4s;
+}
