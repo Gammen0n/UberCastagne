@@ -3,9 +3,9 @@ import FighterCard from '../components/FighterCard.jsx'
 import FilterBar from '../components/FilterBar.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import Button from '../components/Button.jsx'
-import { EmptyState, ErrorBanner, SkeletonGrid } from '../components/states.jsx'
-import { useApi } from '../lib/api.js'
-import { formatCode, lowestRate } from '../lib/format.js'
+import { EmptyState, ErrorBanner, LoadMore, SkeletonGrid } from '../components/states.jsx'
+import { usePaginatedApi } from '../lib/api.js'
+import { formatCode } from '../lib/format.js'
 
 // Values of the catalogue enums (db/sql/catalogue/01-schema.sql).
 const DISCIPLINES = ['BOXING', 'KICKBOXING', 'MUAY_THAI', 'MMA', 'WRESTLING', 'JUDO']
@@ -37,7 +37,7 @@ const FIELDS = [
     label: 'Sort by',
     type: 'select',
     options: [
-      { value: '', label: 'Recommended' },
+      { value: '', label: 'Default' },
       { value: 'rating', label: 'Best rated' },
       { value: 'price', label: 'Lowest price' },
       { value: 'name', label: 'Name' },
@@ -63,37 +63,28 @@ function useDebounced(value, delay) {
   return debounced
 }
 
+// Four rows of three cards per page.
+const PAGE_SIZE = 12
+
 export default function Fighters() {
   const [filters, setFilters] = useState(EMPTY_FILTERS)
+  // Typed fields wait a moment before querying the API.
   const city = useDebounced(filters.city.trim(), 300)
+  const maxPrice = useDebounced(filters.maxPrice, 300)
 
-  // City, discipline and weight class are filtered by the API (GET /api/fighters).
+  // Every filter and the sort are applied by the API (GET /api/fighters); maxPrice is sent in cents.
   const path = useMemo(() => {
-    const params = new URLSearchParams({ limit: '100' })
+    const params = new URLSearchParams({ limit: String(PAGE_SIZE) })
     if (filters.discipline) params.set('discipline', filters.discipline)
     if (filters.weightClass) params.set('weightClass', filters.weightClass)
     if (city) params.set('city', city)
+    if (filters.minRating) params.set('minRating', filters.minRating)
+    if (maxPrice !== '' && Number(maxPrice) >= 0) params.set('maxPrice', String(Math.round(Number(maxPrice) * 100)))
+    if (filters.sort) params.set('sort', filters.sort)
     return `/api/fighters?${params}`
-  }, [filters.discipline, filters.weightClass, city])
+  }, [filters.discipline, filters.weightClass, filters.minRating, filters.sort, city, maxPrice])
 
-  const { status, data, error, reload } = useApi(path)
-
-  // Rating, price and sort are applied in the browser on the list already received.
-  const fighters = useMemo(() => {
-    const minRating = filters.minRating ? Number(filters.minRating) : null
-    const maxCents = filters.maxPrice !== '' ? Number(filters.maxPrice) * 100 : null
-    const list = (data?.items ?? []).filter((fighter) => {
-      if (minRating !== null && (fighter.rating ?? 0) < minRating) return false
-      const rate = lowestRate(fighter.rates)
-      if (maxCents !== null && (!rate || rate.amount > maxCents)) return false
-      return true
-    })
-    const price = (fighter) => lowestRate(fighter.rates)?.amount ?? Infinity
-    if (filters.sort === 'rating') list.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
-    if (filters.sort === 'price') list.sort((a, b) => price(a) - price(b))
-    if (filters.sort === 'name') list.sort((a, b) => (a.displayName ?? '').localeCompare(b.displayName ?? ''))
-    return list
-  }, [data, filters.minRating, filters.maxPrice, filters.sort])
+  const { status, items: fighters, total, error, reload, hasMore, loadMore, loadingMore } = usePaginatedApi(path)
 
   const reset = () => setFilters(EMPTY_FILTERS)
 
@@ -102,7 +93,7 @@ export default function Fighters() {
       <PageHeader
         title="Fighters"
         subtitle="Approved professional fighters available for a supervised Duel or Show."
-        count={status === 'ready' ? fighters.length : undefined}
+        count={status === 'ready' ? total : undefined}
       />
 
       <FilterBar
@@ -124,9 +115,20 @@ export default function Fighters() {
           />
         )}
         {status === 'ready' && fighters.length > 0 && (
-          <div className="card-grid">
-            {fighters.map((fighter) => <FighterCard key={fighter.id} fighter={fighter} />)}
-          </div>
+          <>
+            <div className="card-grid">
+              {fighters.map((fighter) => <FighterCard key={fighter.id} fighter={fighter} />)}
+            </div>
+            <LoadMore
+              shown={fighters.length}
+              total={total}
+              hasMore={hasMore}
+              loading={loadingMore}
+              error={error}
+              onLoadMore={loadMore}
+              noun="fighters"
+            />
+          </>
         )}
       </section>
     </>

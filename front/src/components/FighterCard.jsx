@@ -53,10 +53,12 @@ export default function FighterCard({ fighter }) {
       <footer className="card-foot">
         <p className="price">
           <span className="price-label">From</span>
-          <span className="price-value">{formatMoney(lowestRate(fighter.rates))}</span>
+          <span className="price-value">{formatMoney(fighter.priceFrom ?? lowestRate(fighter.rates))}</span>
         </p>
         <div className="card-actions">
-          <Button variant="ghost" size="sm" disabled title={COMING_SOON}>Profile</Button>
+          <Button variant="ghost" size="sm" to={`/fighters/${fighter.id}`} aria-label={`Profile of ${fighter.displayName ?? fullName}`}>
+            Profile
+          </Button>
           <Button size="sm" disabled title={COMING_SOON}>Book</Button>
         </div>
       </footer>

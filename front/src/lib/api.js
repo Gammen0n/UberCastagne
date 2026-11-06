@@ -17,6 +17,39 @@ export async function getJson(path) {
   return body
 }
 
+// Cursor-paginated list ({ items, nextCursor, total }). Changing `path` starts again from the first page.
+export function usePaginatedApi(path) {
+  const [state, setState] = useState({ status: 'loading', items: [], total: 0, nextCursor: null, error: null, loadingMore: false })
+  const [attempt, setAttempt] = useState(0)
+  const reload = useCallback(() => setAttempt((value) => value + 1), [])
+
+  useEffect(() => {
+    let cancelled = false
+    setState({ status: 'loading', items: [], total: 0, nextCursor: null, error: null, loadingMore: false })
+    getJson(path)
+      .then((body) => !cancelled && setState({
+        status: 'ready', items: body.items, total: body.total ?? body.items.length, nextCursor: body.nextCursor, error: null, loadingMore: false,
+      }))
+      .catch((error) => !cancelled && setState((current) => ({ ...current, status: 'error', error: error.message })))
+    return () => {
+      cancelled = true
+    }
+  }, [path, attempt])
+
+  const loadMore = useCallback(() => {
+    if (!state.nextCursor || state.loadingMore) return
+    setState((current) => ({ ...current, loadingMore: true, error: null }))
+    const separator = path.includes('?') ? '&' : '?'
+    getJson(`${path}${separator}cursor=${encodeURIComponent(state.nextCursor)}`)
+      .then((body) => setState((current) => ({
+        ...current, items: [...current.items, ...body.items], total: body.total ?? current.total, nextCursor: body.nextCursor, loadingMore: false,
+      })))
+      .catch((error) => setState((current) => ({ ...current, loadingMore: false, error: error.message })))
+  }, [path, state.nextCursor, state.loadingMore])
+
+  return { ...state, hasMore: Boolean(state.nextCursor), loadMore, reload }
+}
+
 // Loads `path` (or calls `loader`), optionally refreshing every `refreshMs` while the tab is visible.
 export function useApi(path, { loader, refreshMs } = {}) {
   const [state, setState] = useState({ status: 'loading', data: null, error: null })

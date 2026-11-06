@@ -38,7 +38,7 @@ Créneaux et disponibilités : vendredis et samedis des quatre semaines qui suiv
 
 | Base | Contenu |
 |------|---------|
-| `catalogue` | 8 combattants (6 approuvés, 1 en attente, 1 suspendu), leurs tarifs Duel/Show, leurs disponibilités 17 h – 23 h |
+| `catalogue` | 8 combattants (6 approuvés, 1 en attente, 1 suspendu), leurs tarifs Duel/Show, leurs disponibilités 17 h – 23 h, 20 avis (la note est la moyenne des avis, tenue à jour par un trigger) |
 | `venues` | 4 salles (Pau, Bayonne, Toulouse, Bordeaux), 2 créneaux de 2 h par soirée |
 | `orders` | 5 arbitres (4 actifs, 1 inactif) ; aucune commande |
 | `payment` | tables vides |
