@@ -1,4 +1,5 @@
 import { Route, Routes, useNavigate } from 'react-router-dom'
+import Catalog from './pages/Catalog.jsx'
 
 function Home() {
   const navigate = useNavigate()
@@ -6,14 +7,14 @@ function Home() {
   return (
     <main className="home">
       <button type="button" onClick={() => navigate('/index')}>
-        Connexion
+        Log in
       </button>
     </main>
   )
 }
 
 function Index() {
-  return <main aria-label="Page d'index" />
+  return <main aria-label="Index page" />
 }
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/index" element={<Index />} />
+      <Route path="/catalog" element={<Catalog />} />
     </Routes>
   )
 }
