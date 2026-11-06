@@ -5,6 +5,8 @@ import AppShell from './components/AppShell.jsx'
 import Logo from './components/Logo.jsx'
 import Fighters from './pages/Fighters.jsx'
 import Venues from './pages/Venues.jsx'
+import FighterProfile from './pages/FighterProfile.jsx'
+import VenueSlots from './pages/VenueSlots.jsx'
 import Orders from './pages/Orders.jsx'
 import OrderTracking from './pages/OrderTracking.jsx'
 
@@ -50,7 +52,9 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route element={<AppShell />}>
         <Route path="/fighters" element={<Fighters />} />
+        <Route path="/fighters/:id" element={<FighterProfile />} />
         <Route path="/venues" element={<Venues />} />
+        <Route path="/venues/:id" element={<VenueSlots />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/orders/:id" element={<OrderTracking />} />
       </Route>

@@ -26,7 +26,10 @@ CREATE TABLE fighters (
   wins                   integer NOT NULL DEFAULT 0 CHECK (wins >= 0),
   losses                 integer NOT NULL DEFAULT 0 CHECK (losses >= 0),
   draws                  integer NOT NULL DEFAULT 0 CHECK (draws >= 0),
-  rating                 numeric(2,1) CHECK (rating BETWEEN 0 AND 5),
+  -- Average of the fighter's reviews (NULL without review) and their count, kept up to date by
+  -- the reviews_refresh_fighter trigger below. Never written by hand.
+  rating                 numeric(2,1) CHECK (rating BETWEEN 1 AND 5),
+  review_count           integer NOT NULL DEFAULT 0 CHECK (review_count >= 0),
   reliability            numeric(3,2) NOT NULL DEFAULT 1.00 CHECK (reliability BETWEEN 0 AND 1),
   licence_number         text NOT NULL,
   medical_certificate_until date NOT NULL,
@@ -39,6 +42,9 @@ CREATE TABLE fighters (
 -- BR-2 : la recherche ne voit que les combattants approuvés.
 CREATE INDEX fighters_search_idx ON fighters (weight_class, city) WHERE status = 'APPROVED';
 CREATE INDEX fighters_disciplines_idx ON fighters USING gin (disciplines);
+-- Sorts offered by GET /api/fighters (same expressions as the API, id as tie-breaker for the cursor).
+CREATE INDEX fighters_rating_sort_idx ON fighters ((coalesce(rating, 0)) DESC, id) WHERE status = 'APPROVED';
+CREATE INDEX fighters_name_sort_idx ON fighters ((lower(display_name)), id) WHERE status = 'APPROVED';
 
 CREATE TABLE fighter_rates (
   fighter_id   uuid NOT NULL REFERENCES fighters (id) ON DELETE CASCADE,
@@ -88,6 +94,39 @@ CREATE TABLE reviews (
   -- US-C10 : un seul avis par prestation et par client.
   UNIQUE (order_id, client_user_id)
 );
+
+CREATE INDEX reviews_fighter_idx ON reviews (fighter_id, created_at DESC);
+
+-- Recomputes fighters.rating and fighters.review_count from the reviews, so the stored rating
+-- always matches the reviews and can still be indexed for sorting and filtering.
+CREATE FUNCTION refresh_fighter_rating(target uuid) RETURNS void
+LANGUAGE sql AS $$
+  UPDATE fighters f
+  SET rating = s.average, review_count = s.total, updated_at = now()
+  FROM (
+    SELECT round(avg(rating), 1) AS average, count(*)::int AS total FROM reviews WHERE fighter_id = target
+  ) s
+  WHERE f.id = target;
+$$;
+
+CREATE FUNCTION reviews_refresh_fighter() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP IN ('UPDATE', 'DELETE') THEN
+    PERFORM refresh_fighter_rating(OLD.fighter_id);
+  END IF;
+  -- A review moved to another fighter also changes the new fighter's rating.
+  IF TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND NEW.fighter_id <> OLD.fighter_id) THEN
+    PERFORM refresh_fighter_rating(NEW.fighter_id);
+  END IF;
+  RETURN NULL;
+END;
+$$;
+
+CREATE TRIGGER reviews_refresh_fighter
+AFTER INSERT OR UPDATE OF fighter_id, rating OR DELETE ON reviews
+FOR EACH ROW EXECUTE FUNCTION reviews_refresh_fighter();
+CREATE INDEX availability_upcoming_idx ON availability (fighter_id, (lower(period))) WHERE status = 'AVAILABLE';
 
 CREATE TABLE outbox (
   id              bigserial PRIMARY KEY,

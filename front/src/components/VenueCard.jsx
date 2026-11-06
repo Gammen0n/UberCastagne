@@ -37,7 +37,9 @@ export default function VenueCard({ venue }) {
           <span className="price-value">{formatMoney(venue.priceFrom)}</span>
         </p>
         <div className="card-actions">
-          <Button variant="secondary" size="sm" disabled title="Coming soon">See slots</Button>
+          <Button variant="secondary" size="sm" to={`/venues/${venue.id}`} aria-label={`See slots at ${venue.name}`}>
+            See slots
+          </Button>
         </div>
       </footer>
     </Card>

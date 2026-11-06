@@ -55,3 +55,28 @@ export function lowestRate(rates) {
   if (!amounts.length) return null
   return amounts.reduce((lowest, rate) => (rate.amount < lowest.amount ? rate : lowest))
 }
+
+// "Friday 13 November"
+export function formatDay(iso) {
+  if (isMissing(iso)) return EMPTY
+  return new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso))
+}
+
+// "Fri 13 Nov"
+export function formatShortDay(iso) {
+  if (isMissing(iso)) return EMPTY
+  return new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(iso))
+}
+
+// "18:00–20:00"
+export function formatTimeRange(startIso, endIso) {
+  if (isMissing(startIso)) return EMPTY
+  const time = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' })
+  return isMissing(endIso) ? time.format(new Date(startIso)) : `${time.format(new Date(startIso))}–${time.format(new Date(endIso))}`
+}
+
+// Local calendar day, used to group slots by day.
+export function dayKey(iso) {
+  const date = new Date(iso)
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+}

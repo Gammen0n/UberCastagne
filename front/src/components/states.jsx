@@ -55,3 +55,20 @@ export function ErrorBanner({ title = 'Something went wrong', message, onRetry, 
     </div>
   )
 }
+
+// "Showing 12 of 30" with a button for the next page of a cursor-paginated list.
+export function LoadMore({ shown, total, hasMore, loading, error, onLoadMore, noun }) {
+  return (
+    <div className="load-more">
+      <p className="load-more-count" aria-live="polite">
+        Showing {shown} of {total} {noun}
+      </p>
+      {error && <p className="load-more-error" role="alert">{error}</p>}
+      {hasMore && (
+        <Button variant="secondary" loading={loading} onClick={onLoadMore}>
+          {error ? 'Try again' : 'Load more'}
+        </Button>
+      )}
+    </div>
+  )
+}
