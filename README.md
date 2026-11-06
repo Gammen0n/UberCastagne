@@ -20,17 +20,22 @@ Pour exécuter les applications sans Docker, installer les dépendances dans cha
 
 Un serveur PostgreSQL héberge une base par service (`orders`, `catalogue`, `venues`, `payment`). Chaque base a son propre rôle (`<base>_svc`), qui n'a pas accès aux autres bases (ADR-04).
 
-- `db/init/00-init.sh` crée les rôles et les bases, puis exécute les scripts de `db/sql/<base>/` dans l'ordre.
-- `db/sql/<base>/01-schema.sql` contient les tables et `02-seed.sql` les données de démonstration.
+- `db/init/00-init.sh` crée les rôles, les bases et les extensions, au tout premier démarrage (volume vide).
+- `db/migrations/<base>/` contient le schéma, en fichiers numérotés (`001_initial.sql`, `002_…`).
+- `db/seeds/<base>/` contient les données de démonstration.
+- Le service `migrate` applique ce qui manque à **chaque** `docker compose up`, avant le back. Il note ce qui est fait dans la table `schema_migrations` de chaque base.
 
-Les scripts ne s'exécutent **qu'au premier démarrage**, quand le volume est vide. Pour repartir de zéro après une modification :
+### Modifier le schéma
 
-```bash
-docker compose down -v
-docker compose up --build
-```
+1. Créer un **nouveau** fichier dans la bonne base, avec le numéro suivant : `db/migrations/catalogue/002_add_fighter_nickname.sql`.
+2. Y écrire le changement (`ALTER TABLE …`, `CREATE INDEX …`). Le fichier s'exécute dans une transaction : s'il échoue, rien n'est appliqué et le back ne démarre pas.
+3. Lancer `docker compose up -d` (ou `docker compose run --rm migrate`). Les données existantes sont conservées.
 
-Connexion depuis la machine : `localhost:5432`, par exemple `psql -h localhost -U catalogue_svc catalogue`.
+Ne jamais modifier une migration déjà appliquée : le service `migrate` s'arrête avec une erreur, car le changement n'atteindrait jamais les bases existantes. Écrire une nouvelle migration à la place.
+
+Pour repartir de données de démonstration neuves : `docker compose down -v`, puis `docker compose up -d`. Pour démarrer sans données de démonstration, passer `DEMO_SEED` à `"false"` dans `compose.yaml`.
+
+Connexion depuis la machine : `localhost:5432` (ou le port `POSTGRES_HOST_PORT` du `.env`), par exemple `psql -h localhost -U catalogue_svc catalogue`.
 
 ### Données de démonstration
 
