@@ -1,6 +1,8 @@
 #!/bin/bash
 # Exécuté une seule fois par l'image postgres, au premier démarrage (volume vide).
 # Une base et un rôle par service (ADR-04) : aucun rôle ne peut se connecter à la base d'un autre.
+# Seul ce qui demande un superutilisateur est fait ici ; les tables viennent des migrations
+# (db/migrations), appliquées par le service compose "migrate".
 set -euo pipefail
 
 SERVICES=(orders catalogue venues payment)
@@ -23,10 +25,4 @@ SQL
     -c "CREATE EXTENSION IF NOT EXISTS btree_gist;" \
     -c "REVOKE CREATE ON SCHEMA public FROM PUBLIC;" \
     -c "ALTER SCHEMA public OWNER TO ${svc}_svc;"
-
-  # Schéma puis données, exécutés avec le rôle du service pour qu'il possède ses tables.
-  for file in /sql/"${svc}"/*.sql; do
-    echo "    ${file}"
-    psql -v ON_ERROR_STOP=1 --username "${svc}_svc" --dbname "${svc}" -f "${file}"
-  done
 done

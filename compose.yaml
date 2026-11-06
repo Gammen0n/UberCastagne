@@ -33,6 +33,27 @@ services:
     ports:
       - "3000:3000"
     depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # One-shot: applies pending migrations (and demo seeds) to every database, then exits.
+  # It reuses the back image only for Node and the pg driver.
+  migrate:
+    build:
+      context: ./back
+    working_dir: /app
+    command: node db/migrate.mjs
+    volumes:
+      - ./db:/app/db:ro
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      DEMO_SEED: "true"
+      ORDERS_DB_PASSWORD: ${ORDERS_DB_PASSWORD:?copier .env.example en .env}
+      CATALOGUE_DB_PASSWORD: ${CATALOGUE_DB_PASSWORD:?copier .env.example en .env}
+      VENUES_DB_PASSWORD: ${VENUES_DB_PASSWORD:?copier .env.example en .env}
+      PAYMENT_DB_PASSWORD: ${PAYMENT_DB_PASSWORD:?copier .env.example en .env}
+    depends_on:
       postgres:
         condition: service_healthy
 
@@ -49,12 +70,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d:ro
-      - ./db/sql:/sql:ro
     # Exposé uniquement sur la machine locale, pour inspecter les bases en développement.
     ports:
       - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      # Over TCP: during the first-start init, PostgreSQL only listens on its socket, so this
+      # stays unhealthy until the init scripts are done.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres"]
       interval: 5s
       timeout: 2s
       retries: 10
