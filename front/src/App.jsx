@@ -1,13 +1,32 @@
 import { Route, Routes, useNavigate } from 'react-router-dom'
+import Button from '@mui/material/Button'
+import LoginIcon from '@mui/icons-material/Login'
 
 function Home() {
   const navigate = useNavigate()
 
   return (
     <main className="home">
-      <button type="button" onClick={() => navigate('/index')}>
+      <Button
+        color="inherit"
+        onClick={() => navigate('/index')}
+        size="large"
+        startIcon={<LoginIcon />}
+        variant="contained"
+        sx={{
+          bgcolor: '#ffffff',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
+          color: '#082f6b',
+          fontWeight: 700,
+          px: 3,
+          py: 1.25,
+          '&:hover': {
+            bgcolor: '#e5e7eb',
+          },
+        }}
+      >
         Connexion
-      </button>
+      </Button>
     </main>
   )
 }

@@ -1,7 +1,7 @@
 :root {
   font-family: Inter, system-ui, sans-serif;
-  color: #1c1917;
-  background: #fafaf9;
+  color: #ffffff;
+  background: #061a3a;
 }
 
 * {
@@ -16,18 +16,5 @@ body {
   display: grid;
   min-height: 100vh;
   place-items: center;
-}
-
-button {
-  cursor: pointer;
-  border: 0;
-  border-radius: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  color: #fff;
-  background: #c2410c;
-  font: inherit;
-}
-
-button:hover {
-  background: #9a3412;
+  background: #061a3a;
 }
