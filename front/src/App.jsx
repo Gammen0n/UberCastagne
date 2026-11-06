@@ -1,6 +1,7 @@
 import { Route, Routes, useNavigate } from 'react-router-dom'
-import Button from '@mui/material/Button'
+bouton connexionimport Button from '@mui/material/Button'
 import LoginIcon from '@mui/icons-material/Login'
+import Catalog from './pages/Catalog.jsx'
 
 function Home() {
   const navigate = useNavigate()
@@ -32,7 +33,7 @@ function Home() {
 }
 
 function Index() {
-  return <main aria-label="Page d'index" />
+  return <main aria-label="Index page" />
 }
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/index" element={<Index />} />
+      <Route path="/catalog" element={<Catalog />} />
     </Routes>
   )
 }

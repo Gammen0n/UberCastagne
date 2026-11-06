@@ -22,7 +22,34 @@ services:
       - back_node_modules:/app/node_modules
     ports:
       - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?copier .env.example en .env}
+      ORDERS_DB_PASSWORD: ${ORDERS_DB_PASSWORD:?copier .env.example en .env}
+      CATALOGUE_DB_PASSWORD: ${CATALOGUE_DB_PASSWORD:?copier .env.example en .env}
+      VENUES_DB_PASSWORD: ${VENUES_DB_PASSWORD:?copier .env.example en .env}
+      PAYMENT_DB_PASSWORD: ${PAYMENT_DB_PASSWORD:?copier .env.example en .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+      - ./db/sql:/sql:ro
+    # Exposé uniquement sur la machine locale, pour inspecter les bases en développement.
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 2s
+      retries: 10
 
 volumes:
   front_node_modules:
   back_node_modules:
+  postgres_data:
