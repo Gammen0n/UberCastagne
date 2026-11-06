@@ -1,17 +1,19 @@
 import { defineConfig } from 'vite'
+import { registerApi } from './src/api.js'
 
 function api() {
   return {
     name: 'ubercastagne-api',
     configureServer(server) {
-      server.middlewares.use('/api/health', (_request, response) => {
-        response.setHeader('Content-Type', 'application/json')
-        response.end(JSON.stringify({ status: 'ok' }))
-      })
+      registerApi(server.middlewares)
     },
   }
 }
 
 export default defineConfig({
   plugins: [api()],
+  server: {
+    // Requests proxied by the front container arrive with "Host: back".
+    allowedHosts: ['back'],
+  },
 })

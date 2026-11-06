@@ -1,5 +1,5 @@
 import { Route, Routes, useNavigate } from 'react-router-dom'
-bouton connexionimport Button from '@mui/material/Button'
+import Button from '@mui/material/Button'
 import LoginIcon from '@mui/icons-material/Login'
 import Catalog from './pages/Catalog.jsx'
 
